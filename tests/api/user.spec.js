@@ -1,5 +1,5 @@
 describe("user api", function(){
-  var request = require("request")
+  var request = require("request").defaults({jar: true})
   var helpers = require("../helpers")
   it("starts", helpers.startApiHttpServer)
 
@@ -39,6 +39,21 @@ describe("user api", function(){
       expect(body.result._id).toBeDefined()
       expect(body.result.username).toBe("testuser")
       expect(body.result.password).not.toBeDefined()
+      next()
+    })
+  })
+
+  it("creates message", function(next){
+    request.post({
+      uri: helpers.apiendpoint+"/messages/new",
+      json: {
+        body: "This is my awesome msg"
+      }
+    }, function(err, res, body){
+      expect(res.statusCode).not.toBe(401)
+      expect(res.statusCode).toBe(200)
+      expect(body._id).toBeDefined()
+      expect(body.body).toBe("This is my awesome msg")
       next()
     })
   })
