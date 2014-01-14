@@ -9,6 +9,7 @@ describe("Message model", function(){
     "body": "an awesome msg"
   }
   var loggedUser = null;
+  var message = null;
 
   it("cannot create message if not logged", function(next){
     Message.create(msg, function(err, result){
@@ -22,18 +23,30 @@ describe("Message model", function(){
       "password": "123"
     }, function(err, user){
       expect(user._id).toBeDefined()
-      loggedUser = user;
+      loggedUser = user._id;
       next()
     })
   })
 
   it("creates message", function(next){
-    Message.create(_.extend(msg, {creator: loggedUser._id}), function(err, result){
+    Message.create(_.extend(msg, {creator: loggedUser}), function(err, result){
       expect(err).toBe(null)
       expect(result).toBeDefined()
-      console.log(result);
-      expect(result["creator"]).toBeDefined()
+      expect(result.creator).toBeDefined()
+      message = result;
       next()  
     })
+  })
+  it("sends message", function(next){
+    console.log(loggedUser)
+    User.findById(loggedUser, '-password', function(err, user){
+      console.log(user)
+      expect(user).toBeDefined() 
+      user.sendMessage(msg, function(err, result){
+        expect(result).toBeDefined()
+        next()
+      })
+    })
+    
   })
 })

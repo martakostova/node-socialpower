@@ -1,6 +1,7 @@
 describe("user api", function(){
   var request = require("request").defaults({jar: true})
   var helpers = require("../helpers")
+  var message1;
   it("starts", helpers.startApiHttpServer)
 
   it("registers new user", function(next){
@@ -52,10 +53,22 @@ describe("user api", function(){
     }, function(err, res, body){
       expect(res.statusCode).not.toBe(401)
       expect(res.statusCode).toBe(200)
+      message1 = body;
       expect(body._id).toBeDefined()
       expect(body.body).toBe("This is my awesome msg")
       next()
     })
+  })
+
+  it("sends message", function(next){
+    request.post({
+      uri: helpers.apiendpoint+"/messages/send",
+      json: message1
+    }, function(err, res, body){
+      expect(body).toBeDefined()
+      next()  
+    })
+    
   })
 
   it("stops", helpers.stopApiHttpServer)
