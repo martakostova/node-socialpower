@@ -3,14 +3,15 @@ describe("Message model", function(){
   var Message = require("../../models/server/Message")
   var User = require("../../models/server/User")
   var _ = require("underscore")
-  beforeEach(helpers.connectMongoose)
-  afterEach(helpers.disconnectMongoose)
+
   var msg = {
     "body": "an awesome msg"
   }
   var loggedUser = null;
   var message = null;
-
+  it("connects Mongoose", function(next){
+    helpers.connectMongoose(next)
+  })
   it("cannot create message if not logged", function(next){
     Message.create(msg, function(err, result){
       expect(err).toBeDefined()
@@ -23,7 +24,7 @@ describe("Message model", function(){
       "password": "123"
     }, function(err, user){
       expect(user._id).toBeDefined()
-      loggedUser = user._id;
+      loggedUser = user._id.toString();
       next()
     })
   })
@@ -38,15 +39,17 @@ describe("Message model", function(){
     })
   })
   it("sends message", function(next){
-    console.log(loggedUser)
     User.findById(loggedUser, '-password', function(err, user){
-      console.log(user)
       expect(user).toBeDefined() 
       user.sendMessage(msg, function(err, result){
         expect(result).toBeDefined()
+        expect(result.points).toBe(3)
+        expect(result.messages.length).toBe(1)
         next()
       })
-    })
-    
+    }) 
+  })
+  it("disconnects Mongoose", function(next){
+    helpers.disconnectMongoose(next)
   })
 })

@@ -1,9 +1,11 @@
 var mongoose = require("mongoose");
 var crypto = require("crypto");
 var Message = require("./Message");
+var _ = require("underscore");
 var User = new mongoose.Schema({
   username: { type: String, unique: true, required: true },
   password: { type: String, required: true, select: false },
+  points: {type: Number, default: 0 },
   messages: [{ type: mongoose.Schema.Types.ObjectId }]
 })
 
@@ -34,26 +36,33 @@ User.static("findOneByUsernamePassword", function(username, password, callback) 
   }
   this.findOne(pattern).exec(callback);
 })
+User.method("hasMessage", function(message){
+  return _.contains(this.messages, message._id)
+})
 
 User.method("sendMessage", function(message, callback){
-  if(message._id){
-    // resend message
-  }else{
-    // create message
-    Message.create(message, function(err, result){
-      if (err) return err;
-      var message = result;
-      callback(result);
-    })
-  }
+  var self = this;
+  Message.findOne({body: message.body}, function(err, result){
+    if(result){ //already created msg, just resend it 
+      self.points ++;
 
-  // 1. check is message already stored in DB (has _id property)
-  // 1.1 create the message if not stored yet
-
-  // 2. use message._id to find users who send the message before
-  // 2.1. increment those users points
-  // 
-  // 3. add the message._id to current user's messages
+      if(!self.hasMessage(message))
+        self.messages.push(result);
+      self.save(function(err){
+        if(err) console.error(err);
+      })
+      module.exports.findById(result.creator, function(err, creator){ //find the creator
+        creator.points += 2
+        creator.save(function(err){
+          if(err) console.error(err);
+          callback(null,self)
+        })
+      })
+    }else { // a new message, not saved yet
+      // TODO
+      callback(null,self)
+    }
+  })  
 })
 
 module.exports = mongoose.model("User", User);
